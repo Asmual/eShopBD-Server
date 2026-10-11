@@ -1,0 +1,312 @@
+// Prisma schema for eShopBD eCommerce Platform
+// PostgreSQL Datasource with Prisma Client
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// ENUMS
+// ----------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  SELLER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  BKASH
+  NAGAD
+  CARD
+  SSLCOMMERZ
+}
+
+// ----------------------------------------------------
+// USER & AUTHENTICATION
+// ----------------------------------------------------
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  phone        String?       @unique
+  role         Role          @default(CUSTOMER)
+  isVerified   Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  profile      Profile?
+  sellerStore  SellerStore?
+  orders       Order[]
+  reviews      Review[]
+  cartItems    CartItem[]
+  wishlist     WishlistItem[]
+
+  @@map("users")
+}
+
+model Profile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  fullName   String
+  avatar     String?
+  address    String?
+  city       String?
+  district   String?
+  postalCode String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ----------------------------------------------------
+// MULTI-VENDOR / SELLER STORE
+// ----------------------------------------------------
+
+model SellerStore {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  storeName     String    @unique
+  slug          String    @unique
+  storeLogo     String?
+  banner        String?
+  description   String?
+  businessPhone String
+  businessEmail String
+  isVerified    Boolean   @default(false)
+  rating        Float     @default(5.0)
+  balance       Float     @default(0.0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products      Product[]
+  orderItems    OrderItem[]
+
+  @@map("seller_stores")
+}
+
+// ----------------------------------------------------
+// CATEGORY
+// ----------------------------------------------------
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  image       String?
+  icon        String?
+  parentId    String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children    Category[] @relation("SubCategories")
+  products    Product[]
+
+  @@map("categories")
+}
+
+// ----------------------------------------------------
+// PRODUCT & ASSETS
+// ----------------------------------------------------
+
+model Product {
+  id              String         @id @default(uuid())
+  sellerStoreId   String
+  categoryId      String
+  name            String
+  slug            String         @unique
+  description     String
+  price           Float
+  originalPrice   Float?
+  discountPercent Int?
+  stock           Int            @default(0)
+  sku             String?        @unique
+  badge           String?
+  isFeatured      Boolean        @default(false)
+  isMegaDeal      Boolean        @default(false)
+  isBestSeller    Boolean        @default(false)
+  isNewArrival    Boolean        @default(false)
+  rating          Float          @default(5.0)
+  reviewsCount    Int            @default(0)
+  soldCount       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  sellerStore     SellerStore    @relation(fields: [sellerStoreId], references: [id], onDelete: Cascade)
+  category        Category       @relation(fields: [categoryId], references: [id])
+  images          ProductImage[]
+  orderItems      OrderItem[]
+  reviews         Review[]
+  cartItems       CartItem[]
+  wishlistItems   WishlistItem[]
+
+  @@index([categoryId])
+  @@index([sellerStoreId])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  url       String
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// ----------------------------------------------------
+// CART & WISHLIST
+// ----------------------------------------------------
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+// ----------------------------------------------------
+// ORDERS & CHECKOUT
+// ----------------------------------------------------
+
+model Order {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique
+  userId          String
+  totalAmount     Float
+  discountAmount  Float         @default(0.0)
+  deliveryFee     Float         @default(60.0)
+  finalAmount     Float
+  paymentMethod   PaymentMethod @default(COD)
+  paymentStatus   PaymentStatus @default(PENDING)
+  orderStatus     OrderStatus   @default(PENDING)
+  shippingAddress String
+  city            String
+  phone           String
+  trackingCode    String?       @unique
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@map("orders")
+}
+
+model OrderItem {
+  id            String       @id @default(uuid())
+  orderId       String
+  productId     String
+  sellerStoreId String
+  quantity      Int
+  unitPrice     Float
+  subtotal      Float
+
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product      @relation(fields: [productId], references: [id])
+  sellerStore   SellerStore  @relation(fields: [sellerStoreId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// ----------------------------------------------------
+// REVIEWS
+// ----------------------------------------------------
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("reviews")
+}
+
+// ----------------------------------------------------
+// MARKETING & COUPONS
+// ----------------------------------------------------
+
+model Coupon {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  discountPercent Int?
+  discountAmount  Float?
+  minOrderAmount  Float     @default(0.0)
+  maxDiscount     Float?
+  validFrom       DateTime  @default(now())
+  validUntil      DateTime
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  @@map("coupons")
+}
