@@ -10,10 +10,27 @@ import { notFoundHandler } from "./middlewares/notFound.js";
 export const createApp = (): Application => {
   const app = express();
 
+  // Allowed origins including local dev, production frontend, and Vercel previews
+  const allowedOrigins = [
+    ENV.CLIENT_URL,
+    "http://localhost:3000",
+    "https://e-shop-bd-gamma.vercel.app",
+  ];
+
   // Middleware pipeline
   app.use(
     cors({
-      origin: [ENV.CLIENT_URL, "http://localhost:3000"],
+      origin: (origin, callback) => {
+        if (
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          origin.endsWith(".vercel.app")
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+      },
       credentials: true,
     })
   );

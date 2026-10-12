@@ -4,9 +4,9 @@
   "description": "Backend API Server for eShopBD Multi-Vendor eCommerce Platform",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node api.js && tsx watch src/index.ts",
     "build": "prisma generate && tsc",
-    "start": "node dist/index.js",
+    "start": "node api.js && node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:studio": "prisma studio"
@@ -30,6 +30,7 @@
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.1",
+    "node-fetch": "^3.3.2",
     "prisma": "^6.4.1",
     "typescript": "^6.0.3",
     "zod": "^4.6.6"
