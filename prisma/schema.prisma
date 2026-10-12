@@ -310,3 +310,70 @@ model Coupon {
 
   @@map("coupons")
 }
+
+// ----------------------------------------------------
+// BETTER AUTH (Mapped directly to Better Auth tables)
+// ----------------------------------------------------
+
+model BetterUser {
+  id            String          @id
+  name          String
+  email         String          @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  role          String?
+
+  sessions      BetterSession[]
+  accounts      BetterAccount[]
+
+  @@map("user")
+}
+
+model BetterSession {
+  id        String     @id
+  expiresAt DateTime
+  token     String     @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user      BetterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model BetterAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  user                  BetterUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model BetterVerification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
