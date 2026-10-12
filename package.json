@@ -11,7 +11,14 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
-  "keywords": ["ecommerce", "prisma", "postgresql", "express", "typescript", "eshopbd"],
+  "keywords": [
+    "ecommerce",
+    "prisma",
+    "postgresql",
+    "express",
+    "typescript",
+    "eshopbd"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -26,6 +33,7 @@
     "zod": "^4.6.6"
   },
   "devDependencies": {
+    "@neon/config": "^1.8.6",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
