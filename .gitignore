@@ -49,8 +49,8 @@ public/fonts/
 venv/
 
 
-.env
-.env.*
-.env.local
-.env.production
-.vscode/
+
+
+# VS Code
+*.orc
+
